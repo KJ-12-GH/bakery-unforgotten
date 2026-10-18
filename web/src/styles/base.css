@@ -1,0 +1,198 @@
+/* ==========================================================================
+   Base — reset, document defaults, typography, accessibility helpers
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--color-text);
+  background: var(--color-cream);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+p,
+figure {
+  margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  line-height: var(--leading-tight);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+a {
+  color: var(--color-bark);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--color-wood);
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+/* Focus visibility ---------------------------------------------------------*/
+:focus-visible {
+  outline: 2px solid var(--color-terra);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+/* Typography scale ---------------------------------------------------------*/
+.page-title {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.section-title {
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.card-title {
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.body-text {
+  font-size: var(--text-base);
+}
+
+.meta {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.meta-xs {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+}
+
+.text-muted {
+  color: var(--color-muted);
+}
+
+.text-strong {
+  font-weight: 600;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Accessibility ------------------------------------------------------------*/
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--space-4);
+  top: -60px;
+  z-index: 200;
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-wood);
+  color: var(--color-cream);
+  border-radius: var(--radius-sm);
+  transition: top var(--transition);
+}
+
+.skip-link:focus {
+  top: var(--space-4);
+  color: var(--color-cream);
+}
+
+/* Scrollbars ---------------------------------------------------------------*/
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-dune) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--color-dune);
+  border-radius: var(--radius-pill);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
