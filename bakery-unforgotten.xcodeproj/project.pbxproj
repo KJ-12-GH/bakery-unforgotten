@@ -256,6 +256,8 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = BakeCheck;
+				INFOPLIST_KEY_NSCameraUsageDescription = "BakeCheck ใช้กล้องเพื่อจับภาพสินค้าในสถานีตรวจสอบ (ต้นแบบนี้ยังไม่วิเคราะห์ภาพด้วย AI จริง)";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -293,6 +295,8 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = BakeCheck;
+				INFOPLIST_KEY_NSCameraUsageDescription = "BakeCheck ใช้กล้องเพื่อจับภาพสินค้าในสถานีตรวจสอบ (ต้นแบบนี้ยังไม่วิเคราะห์ภาพด้วย AI จริง)";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
