@@ -66,7 +66,7 @@ struct PackingStationPage: View {
             } else {
                 PushedPageScaffold { content }
                     .navigationTitle(selectedId ?? "ตรวจสอบสินค้า")
-                    .navigationBarTitleDisplayMode(.inline)
+                    .bakeInlineTitle()
             }
         }
         .onAppear {

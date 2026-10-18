@@ -83,7 +83,7 @@ struct TopBar: View {
             TextField("ค้นหารหัสออเดอร์ เช่น BK-1001", text: $query)
                 .font(BakeFont.small)
                 .autocorrectionDisabled()
-                .textInputAutocapitalization(.characters)
+                .bakeUppercaseAutocapitalization()
                 .onSubmit(submitSearch)
         }
         .padding(.horizontal, BakeSpace.s3)
@@ -218,9 +218,9 @@ struct SearchSheet: View {
             .padding(BakeSpace.s4)
             .background(BakeColor.cream)
             .navigationTitle("ค้นหาออเดอร์")
-            .navigationBarTitleDisplayMode(.inline)
+            .bakeInlineTitle()
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .bakeTrailing) {
                     Button("ปิด") { dismiss() }
                         .foregroundStyle(BakeColor.bark)
                 }

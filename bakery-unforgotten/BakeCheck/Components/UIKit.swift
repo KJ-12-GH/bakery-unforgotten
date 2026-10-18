@@ -255,7 +255,7 @@ struct BakeTextField: View {
             TextField(placeholder, text: $text)
                 .font(BakeFont.body)
                 .foregroundStyle(BakeColor.text)
-                .textInputAutocapitalization(.never)
+                .bakeNoAutocapitalization()
                 .autocorrectionDisabled()
                 .focused($isFocused)
             if !text.isEmpty, isFocused {

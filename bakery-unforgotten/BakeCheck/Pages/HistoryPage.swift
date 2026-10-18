@@ -87,7 +87,7 @@ struct HistoryPage: View {
             } else {
                 PushedPageScaffold { content }
                     .navigationTitle("ประวัติออเดอร์")
-                    .navigationBarTitleDisplayMode(.inline)
+                    .bakeInlineTitle()
             }
         }
         .sheet(item: $selectedRecord) { target in

@@ -92,7 +92,7 @@ struct RootPageScaffold<Content: View>: View {
             }
         }
         .background(BakeColor.cream.ignoresSafeArea())
-        .toolbar(.hidden, for: .navigationBar)
+        .bakeHidesNavigationBar()
     }
 }
 

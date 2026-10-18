@@ -37,7 +37,7 @@ struct VerificationResultPage: View {
             }
         }
         .navigationTitle("ผลการตรวจสอบ")
-        .navigationBarTitleDisplayMode(.inline)
+        .bakeInlineTitle()
         .onDisappear {
             scanTask?.cancel()
             scanTask = nil

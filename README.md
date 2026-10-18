@@ -66,6 +66,12 @@ xcodebuild -project bakery-unforgotten.xcodeproj \
 The Xcode project uses `PBXFileSystemSynchronizedRootGroup`, so any `.swift` file added under
 `bakery-unforgotten/` is picked up automatically — no `project.pbxproj` edits are needed.
 
+The target lists macOS as a supported platform, so **My Mac** also builds and runs. iOS-only APIs
+(`navigationBarTitleDisplayMode`, `toolbar(_:for: .navigationBar)`,
+`ToolbarItemPlacement.topBarLeading/.topBarTrailing`, `textInputAutocapitalization`) are wrapped in
+`Components/PlatformCompat.swift`; on macOS each helper falls back to its native equivalent or a
+no-op. Both platforms build cleanly for Debug and Release.
+
 ### Screens
 
 Five tabs, each owning its own `NavigationStack`:

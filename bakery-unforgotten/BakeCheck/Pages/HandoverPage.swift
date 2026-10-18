@@ -110,7 +110,7 @@ struct HandoverPage: View {
             }
         }
         .navigationTitle("ส่งมอบสินค้า")
-        .navigationBarTitleDisplayMode(.inline)
+        .bakeInlineTitle()
         .sheet(item: Binding(
             get: { targetId.map(IdentifiedID.init(id:)) },
             set: { targetId = $0?.id }

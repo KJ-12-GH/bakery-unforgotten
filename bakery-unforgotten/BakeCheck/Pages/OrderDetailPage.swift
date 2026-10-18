@@ -36,7 +36,7 @@ struct OrderDetailPage: View {
             }
         }
         .navigationTitle(orderId)
-        .navigationBarTitleDisplayMode(.inline)
+        .bakeInlineTitle()
     }
 
     @ViewBuilder

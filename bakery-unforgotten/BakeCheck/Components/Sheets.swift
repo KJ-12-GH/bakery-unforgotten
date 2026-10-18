@@ -73,7 +73,7 @@ struct ConfirmDialogContent<Detail: View>: View {
             }
             .background(BakeColor.cream)
             .navigationTitle("ยืนยันการทำรายการ")
-            .navigationBarTitleDisplayMode(.inline)
+            .bakeInlineTitle()
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
@@ -160,7 +160,7 @@ struct EditQuantitySheet: View {
             }
             .background(BakeColor.cream)
             .navigationTitle("แก้ไขจำนวนที่ตรวจพบ")
-            .navigationBarTitleDisplayMode(.inline)
+            .bakeInlineTitle()
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
@@ -309,9 +309,9 @@ struct OrderDetailSheet: View {
             }
             .background(BakeColor.cream)
             .navigationTitle(order.id)
-            .navigationBarTitleDisplayMode(.inline)
+            .bakeInlineTitle()
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .bakeTrailing) {
                     Button("ปิด") { dismiss() }
                         .foregroundStyle(BakeColor.bark)
                 }
@@ -396,14 +396,14 @@ struct NotificationsSheet: View {
             }
             .background(BakeColor.cream)
             .navigationTitle("การแจ้งเตือน")
-            .navigationBarTitleDisplayMode(.inline)
+            .bakeInlineTitle()
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .bakeLeading) {
                     Text("\(unreadCount) ใหม่")
                         .font(BakeFont.tiny)
                         .foregroundStyle(BakeColor.muted)
                 }
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .bakeTrailing) {
                     Button("ปิด") { dismiss() }
                         .foregroundStyle(BakeColor.bark)
                 }
@@ -473,9 +473,9 @@ struct RecordDetailSheet: View {
             }
             .background(BakeColor.cream)
             .navigationTitle("ผลการตรวจสอบ \(record.orderId)")
-            .navigationBarTitleDisplayMode(.inline)
+            .bakeInlineTitle()
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .bakeTrailing) {
                     Button("ปิด") { dismiss() }
                         .foregroundStyle(BakeColor.bark)
                 }
