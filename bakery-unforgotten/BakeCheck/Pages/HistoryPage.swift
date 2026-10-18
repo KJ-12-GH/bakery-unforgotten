@@ -81,7 +81,7 @@ struct HistoryPage: View {
 
     var body: some View {
         PushedPageScaffold { content }
-            .navigationTitle("")
+            .navigationTitle("ประวัติออเดอร์")
             .bakeInlineTitle()
             .sheet(item: $selectedRecord) { target in
             if let row = rows.first(where: { $0.record.id == target.id }) {

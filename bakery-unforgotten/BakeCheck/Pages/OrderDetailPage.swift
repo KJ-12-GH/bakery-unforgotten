@@ -35,7 +35,7 @@ struct OrderDetailPage: View {
                 }
             }
         }
-        .navigationTitle("")
+        .navigationTitle(store.order(orderId)?.id ?? "รายละเอียดออเดอร์")
         .bakeInlineTitle()
     }
 

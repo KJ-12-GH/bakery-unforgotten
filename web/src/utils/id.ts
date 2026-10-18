@@ -1,7 +1,0 @@
-/** Deterministic id generator (prototype only — a backend would own ids). */
-let counter = 0
-
-export function createId(prefix: string): string {
-  counter += 1
-  return `${prefix}-${Date.now().toString(36)}-${counter.toString(36)}`
-}

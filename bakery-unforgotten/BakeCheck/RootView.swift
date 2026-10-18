@@ -3,8 +3,9 @@
 //  BakeCheck
 //
 //  App shell: two areas only — the packing station (the default screen) and
-//  settings. Everything else is pushed on top, which keeps the tab bar calm on
-//  iPhone and lets the same code breathe on iPad.
+//  settings. Everything else is pushed on top. Each area is a native
+//  `NavigationStack`, so screens get real large titles and (on iOS/macOS 26)
+//  Liquid Glass navigation bars and a minimizing tab bar for free.
 //
 
 import SwiftUI
@@ -21,6 +22,7 @@ struct BakeCheckRootView: View {
                 area(.settings) { SettingsPage() }
             }
             .tint(BakeColor.terra)
+            .bakeMinimizingTabBar()
 
             ToastOverlay()
         }
@@ -43,6 +45,22 @@ struct BakeCheckRootView: View {
             Label(tab.title, systemImage: tab.icon.rawValue)
         }
         .tag(tab)
+    }
+}
+
+private extension View {
+    /// iOS/macOS 26 collapse-on-scroll tab bar; no-op on older systems.
+    @ViewBuilder
+    func bakeMinimizingTabBar() -> some View {
+        #if os(iOS)
+        if #available(iOS 26.0, *) {
+            tabBarMinimizeBehavior(.onScrollDown)
+        } else {
+            self
+        }
+        #else
+        self
+        #endif
     }
 }
 
@@ -73,8 +91,8 @@ struct DestinationView: View {
 
 // MARK: - Shared page scaffold
 
-/// Root-screen layout: fixed custom top bar + scrolling content. The content
-/// column widens on iPad but never stretches to unreadable line lengths.
+/// Root-screen layout: a scrolling content column under a native large-title
+/// navigation bar. The column widens on iPad but keeps a readable line length.
 struct RootPageScaffold<Content: View>: View {
     var tab: AppTab
     /// Overrides the default reading width (settings prefers a narrower column).
@@ -88,22 +106,18 @@ struct RootPageScaffold<Content: View>: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            TopBar(tab: tab)
-            ScrollView {
-                VStack(alignment: .leading, spacing: BakeSpace.s5) {
-                    content()
-                }
-                .padding(.horizontal, BakeSpace.s4)
-                .padding(.top, BakeSpace.s4)
-                .padding(.bottom, BakeSpace.s10)
-                .frame(maxWidth: width)
-                .frame(maxWidth: .infinity)
+        ScrollView {
+            VStack(alignment: .leading, spacing: BakeSpace.s5) {
+                content()
             }
-            .scrollIndicators(.hidden)
+            .padding(.horizontal, BakeSpace.s4)
+            .padding(.top, BakeSpace.s3)
+            .padding(.bottom, BakeSpace.s10)
+            .frame(maxWidth: width)
+            .frame(maxWidth: .infinity)
         }
+        .scrollIndicators(.hidden)
         .background(BakeAmbientBackground())
-        .bakeHidesNavigationBar()
     }
 }
 
@@ -124,7 +138,7 @@ struct PushedPageScaffold<Content: View>: View {
                 content()
             }
             .padding(.horizontal, BakeSpace.s4)
-            .padding(.top, BakeSpace.s4)
+            .padding(.top, BakeSpace.s3)
             .padding(.bottom, BakeSpace.s10)
             .frame(maxWidth: width)
             .frame(maxWidth: .infinity)

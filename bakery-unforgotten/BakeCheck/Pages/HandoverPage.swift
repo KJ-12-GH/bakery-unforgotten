@@ -109,7 +109,7 @@ struct HandoverPage: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .navigationTitle("")
+        .navigationTitle("ส่งมอบสินค้า")
         .bakeInlineTitle()
         .sheet(item: Binding(
             get: { targetId.map(IdentifiedID.init(id:)) },

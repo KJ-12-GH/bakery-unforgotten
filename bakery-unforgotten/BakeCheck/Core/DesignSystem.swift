@@ -2,11 +2,44 @@
 //  DesignSystem.swift
 //  BakeCheck
 //
-//  Earth-tone bakery palette + spacing/typography tokens.
-//  Hex values are carried over 1:1 from the web prototype's tokens.css.
+//  The visual foundation: a warm bakery palette kept as an *accent* over native
+//  system surfaces, Dynamic-Type typography, and Liquid Glass helpers.
+//
+//  • Every structural colour (surfaces, text, borders, status tones) is defined
+//    as a light/dark pair so the app follows the system appearance automatically
+//    while the brand stays warm. Pure warm accents (terra/sand/dune) sit on top.
+//  • Fonts map to relative text styles, so the UI honours Dynamic Type.
+//  • `bakeGlass` / `bakeGlassCard` apply real Liquid Glass on iOS/macOS 26+ and
+//    fall back to `.ultraThinMaterial` everywhere older.
 //
 
 import SwiftUI
+
+#if canImport(UIKit)
+import UIKit
+private extension UIColor {
+    convenience init(rgb: UInt32) {
+        self.init(
+            red: CGFloat((rgb >> 16) & 0xFF) / 255,
+            green: CGFloat((rgb >> 8) & 0xFF) / 255,
+            blue: CGFloat(rgb & 0xFF) / 255,
+            alpha: 1
+        )
+    }
+}
+#elseif canImport(AppKit)
+import AppKit
+private extension NSColor {
+    convenience init(rgb: UInt32) {
+        self.init(
+            srgbRed: CGFloat((rgb >> 16) & 0xFF) / 255,
+            green: CGFloat((rgb >> 8) & 0xFF) / 255,
+            blue: CGFloat(rgb & 0xFF) / 255,
+            alpha: 1
+        )
+    }
+}
+#endif
 
 extension Color {
     /// 0xRRGGBB convenience initialiser.
@@ -16,56 +49,75 @@ extension Color {
         let b = Double(hex & 0xFF) / 255
         self.init(red: r, green: g, blue: b)
     }
+
+    /// Appearance-aware colour: `light` in light mode, `dark` in dark mode.
+    /// Falls back to the light value on platforms without a dynamic provider.
+    init(hex light: UInt32, dark: UInt32) {
+        #if canImport(UIKit)
+        self = Color(uiColor: UIColor { traits in
+            traits.userInterfaceStyle == .dark ? UIColor(rgb: dark) : UIColor(rgb: light)
+        })
+        #elseif canImport(AppKit)
+        self = Color(nsColor: NSColor(name: nil) { appearance in
+            appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+                ? NSColor(rgb: dark) : NSColor(rgb: light)
+        })
+        #else
+        self.init(hex: light)
+        #endif
+    }
 }
 
 enum BakeColor {
-    // Brand palette (as specified in the brief)
-    static let cream = Color(hex: 0xF5EDE3)
+    // Warm brand accents (used on gradients, selection, primary controls).
+    static let cream = Color(hex: 0xF5EDE3, dark: 0x15110E)   // page background
     static let sand = Color(hex: 0xD8C7AE)
     static let dune = Color(hex: 0xC6AD92)
-    static let terra = Color(hex: 0xB77955)
-    static let bark = Color(hex: 0x8D6B4F)
-    static let wood = Color(hex: 0x684329)
+    static let terra = Color(hex: 0xB77955)                   // primary accent
+    static let bark = Color(hex: 0x8D6B4F, dark: 0xD0AC85)
+    static let wood = Color(hex: 0x684329, dark: 0xE6C49C)    // brand heading/number
     static let white = Color.white
-    static let text = Color(hex: 0x30251E)
-    static let muted = Color(hex: 0x786B60)
 
-    // Derived surfaces
-    static let surface = Color.white
-    static let surfaceSunken = Color(hex: 0xFAF5EE)
-    static let surfaceTint = Color(hex: 0xF7EFE6)
+    // Text
+    static let text = Color(hex: 0x30251E, dark: 0xF4ECE2)
+    static let muted = Color(hex: 0x786B60, dark: 0xABA091)
+
+    // Surfaces
+    static let surface = Color(hex: 0xFFFFFF, dark: 0x211C17)
+    static let surfaceSunken = Color(hex: 0xFAF5EE, dark: 0x1A1510)
+    static let surfaceTint = Color(hex: 0xF7EFE6, dark: 0x2A231C)
 
     // Borders
-    static let border = Color(hex: 0xE9DFD2)
-    static let borderSoft = Color(hex: 0xF0E8DD)
+    static let border = Color(hex: 0xE9DFD2, dark: 0x39312A)
+    static let borderSoft = Color(hex: 0xF0E8DD, dark: 0x2C251F)
 
     // Interactive brand states
-    static let terraStrong = Color(hex: 0xA2673F)
-    static let terraSoft = Color(hex: 0xF3E3D7)
+    static let terraStrong = Color(hex: 0xA2673F, dark: 0xE0A878)
+    static let terraSoft = Color(hex: 0xF3E3D7, dark: 0x3C2C21)
 
-    // Status — muted, readable variants
-    static let success = Color(hex: 0x4D7A4F)
-    static let successStrong = Color(hex: 0x3D6440)
-    static let successBg = Color(hex: 0xE9F1E6)
-    static let successBorder = Color(hex: 0xC6DABE)
+    // Status — appearance-aware so chips/notices read in both modes.
+    static let success = Color(hex: 0x4D7A4F, dark: 0x7FB683)
+    static let successStrong = Color(hex: 0x3D6440, dark: 0x9FD3A2)
+    static let successBg = Color(hex: 0xE9F1E6, dark: 0x1E2A1E)
+    static let successBorder = Color(hex: 0xC6DABE, dark: 0x32462F)
 
-    static let error = Color(hex: 0xA94A3C)
-    static let errorStrong = Color(hex: 0x8C3A2E)
-    static let errorBg = Color(hex: 0xF8E8E4)
-    static let errorBorder = Color(hex: 0xE6C1B9)
+    static let error = Color(hex: 0xA94A3C, dark: 0xE08376)
+    static let errorStrong = Color(hex: 0x8C3A2E, dark: 0xF0A79B)
+    static let errorBg = Color(hex: 0xF8E8E4, dark: 0x2E1A16)
+    static let errorBorder = Color(hex: 0xE6C1B9, dark: 0x4A2922)
 
-    static let warning = Color(hex: 0xA9741F)
-    static let warningStrong = Color(hex: 0x8C5F16)
-    static let warningBg = Color(hex: 0xF8EFD9)
-    static let warningBorder = Color(hex: 0xE9D5A6)
+    static let warning = Color(hex: 0xA9741F, dark: 0xD7A24C)
+    static let warningStrong = Color(hex: 0x8C5F16, dark: 0xE9C27A)
+    static let warningBg = Color(hex: 0xF8EFD9, dark: 0x2C2413)
+    static let warningBorder = Color(hex: 0xE9D5A6, dark: 0x473A1E)
 
-    static let info = Color(hex: 0x4A6B82)
-    static let infoBg = Color(hex: 0xE8EFF4)
-    static let infoBorder = Color(hex: 0xC4D7E3)
+    static let info = Color(hex: 0x4A6B82, dark: 0x7FA6C0)
+    static let infoBg = Color(hex: 0xE8EFF4, dark: 0x16212A)
+    static let infoBorder = Color(hex: 0xC4D7E3, dark: 0x2B3C49)
 
-    static let neutral = Color(hex: 0x786B60)
-    static let neutralBg = Color(hex: 0xF0EAE2)
-    static let neutralBorder = Color(hex: 0xE2D7C8)
+    static let neutral = Color(hex: 0x786B60, dark: 0xABA091)
+    static let neutralBg = Color(hex: 0xF0EAE2, dark: 0x221D18)
+    static let neutralBorder = Color(hex: 0xE2D7C8, dark: 0x362E27)
 }
 
 extension BadgeTone {
@@ -136,23 +188,55 @@ enum BakeSpace {
     static let s10: CGFloat = 40
 }
 
+/// Typography mapped to relative text styles so the whole UI scales with
+/// Dynamic Type. Titles use the rounded design for a friendlier, Apple-like feel.
 enum BakeFont {
-    static let title = Font.system(size: 27, weight: .bold)
-    static let sectionTitle = Font.system(size: 18, weight: .semibold)
-    static let cardTitle = Font.system(size: 16, weight: .semibold)
-    static let body = Font.system(size: 15)
-    static let bodyStrong = Font.system(size: 15, weight: .semibold)
-    static let small = Font.system(size: 13)
-    static let smallStrong = Font.system(size: 13, weight: .semibold)
-    static let tiny = Font.system(size: 12)
-    static let stat = Font.system(size: 27, weight: .bold)
-    static let mono = Font.system(size: 14, weight: .semibold, design: .monospaced)
+    static let title = Font.system(.title2, design: .rounded).weight(.bold)
+    static let sectionTitle = Font.system(.title3, design: .rounded).weight(.semibold)
+    static let cardTitle = Font.system(.headline)
+    static let body = Font.system(.body)
+    static let bodyStrong = Font.system(.body).weight(.semibold)
+    static let small = Font.system(.subheadline)
+    static let smallStrong = Font.system(.subheadline).weight(.semibold)
+    static let tiny = Font.system(.footnote)
+    static let smallStrongTiny = Font.system(.footnote).weight(.semibold)
+    static let stat = Font.system(.largeTitle, design: .rounded).weight(.bold)
+    static let mono = Font.system(.subheadline, design: .monospaced).weight(.semibold)
+}
+
+// MARK: - Liquid Glass
+
+extension View {
+    /// Real Liquid Glass on iOS/macOS 26+, `.ultraThinMaterial` as a fallback.
+    @ViewBuilder
+    func bakeGlass<S: Shape>(in shape: S, interactive: Bool = false) -> some View {
+        if #available(iOS 26.0, macOS 26.0, *) {
+            glassEffect(interactive ? .regular.interactive() : .regular, in: shape)
+        } else {
+            background(.ultraThinMaterial, in: shape)
+        }
+    }
+
+    /// A tinted Liquid Glass surface (used behind filled buttons). Falls back to
+    /// a solid fill of the tint on older systems.
+    @ViewBuilder
+    func bakeTintedGlass<S: Shape>(_ tint: Color, in shape: S, interactive: Bool = true) -> some View {
+        if #available(iOS 26.0, macOS 26.0, *) {
+            glassEffect(
+                interactive ? .regular.tint(tint).interactive() : .regular.tint(tint),
+                in: shape
+            )
+        } else {
+            background(tint, in: shape)
+        }
+    }
 }
 
 // MARK: - Reusable surface
 
-/// Rounded white card with a soft border and gentle elevation, matching the
-/// web `Card` but with the depth Apple surfaces use.
+/// Rounded content card: a solid, appearance-aware surface with a hairline
+/// border and soft elevation. (Liquid Glass is reserved for floating controls
+/// and navigation, per Apple's guidance — not large content cards.)
 struct BakeCard<Content: View>: View {
     var padding: CGFloat = BakeSpace.s4
     @ViewBuilder var content: () -> Content

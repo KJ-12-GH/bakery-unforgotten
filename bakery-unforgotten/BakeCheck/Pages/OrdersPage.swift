@@ -129,15 +129,8 @@ struct OrdersPage: View {
                     }
                 }
             }
-
-            Notice(tone: .info) {
-                Text("ออเดอร์ที่ยังไม่ผ่านการตรวจสอบจะไม่สามารถส่งมอบได้ — เลือก “ตรวจสอบ” เพื่อเข้าสู่สถานีตรวจสอบสินค้า")
-                    .font(BakeFont.small)
-                    .foregroundStyle(BakeColor.text)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
         }
-        .navigationTitle("")
+        .navigationTitle("จัดการออเดอร์")
         .bakeInlineTitle()
     }
 

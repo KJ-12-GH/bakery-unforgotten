@@ -5,6 +5,9 @@
 //  ★ The heart of the product: scan a packed order and compare the detected
 //  quantities against the customer's order before it leaves the bakery.
 //
+//  Decluttered for a live demo — the screen is just: pick the order (in the
+//  toolbar) → capture → compare → confirm. No hero, no how-to, no filler.
+//
 
 import SwiftUI
 
@@ -21,6 +24,8 @@ struct PackingStationPage: View {
     @State private var lastCapture: Data?
     @State private var editTarget: EditQuantityTarget?
     @State private var showConfirm = false
+    @State private var showNotifications = false
+    @State private var readIds: Set<String> = []
     @State private var scanTask: Task<Void, Never>?
 
     private var isRoot: Bool { orderId == nil }
@@ -59,13 +64,19 @@ struct PackingStationPage: View {
 
     private var isLocked: Bool { currentOrder?.handover == .handedOver }
 
+    private var unreadCount: Int {
+        store.notifications.filter { !readIds.contains($0.id) }.count
+    }
+
     var body: some View {
         Group {
             if isRoot {
                 RootPageScaffold(tab: .packing) { content }
+                    .navigationTitle("ตรวจสอบสินค้า")
+                    .toolbar { rootToolbar }
             } else {
                 PushedPageScaffold { content }
-                    .navigationTitle(selectedId ?? "ตรวจสอบสินค้า")
+                    .navigationTitle(currentOrder?.id ?? "ตรวจสอบสินค้า")
                     .bakeInlineTitle()
             }
         }
@@ -95,20 +106,56 @@ struct PackingStationPage: View {
             )
         }
         .sheet(isPresented: $showConfirm) { confirmDialog }
+        .sheet(isPresented: $showNotifications) {
+            NotificationsSheet(
+                notifications: store.notifications,
+                readIds: readIds,
+                onOpen: { item in
+                    readIds.insert(item.id)
+                    router.go(item.opensHandover ? .handover(item.orderId) : .packing(item.orderId))
+                }
+            )
+        }
     }
+
+    // MARK: - Toolbar (root only)
+
+    @ToolbarContentBuilder
+    private var rootToolbar: some ToolbarContent {
+        ToolbarItem(placement: .bakeTrailing) {
+            Button {
+                showNotifications = true
+            } label: {
+                Image(systemName: unreadCount > 0 ? "bell.badge" : "bell")
+                    .symbolRenderingMode(.hierarchical)
+            }
+            .accessibilityLabel("การแจ้งเตือน")
+        }
+        if !selectableOrders.isEmpty {
+            ToolbarItem(placement: .bakeTrailing) {
+                Menu {
+                    Picker("เลือกออเดอร์", selection: Binding(
+                        get: { selectedId ?? currentOrder?.id ?? "" },
+                        set: { selectedId = $0; lastCapture = nil }
+                    )) {
+                        ForEach(selectableOrders) { item in
+                            Text("\(item.id) · \(item.customer)").tag(item.id)
+                        }
+                    }
+                } label: {
+                    Label("เลือกออเดอร์", systemImage: "arrow.left.arrow.right")
+                }
+                .disabled(isLocked)
+            }
+        }
+    }
+
+    // MARK: - Content
 
     @ViewBuilder
     private var content: some View {
         if let order = currentOrder {
-            BakeHero(
-                title: "ตรวจสอบสินค้า",
-                subtitle: "\(order.id) · \(order.customer)",
-                symbol: "viewfinder",
-                tag: "ผลจำลอง",
-                footnote: "\(order.items.count) รายการ · รวม \(OrderMath.totalQty(order)) ชิ้น · \(Labels.handover(order.handover))"
-            )
-
-            orderPickerCard(order)
+            orderSummaryCard(order)
 
             BakeSplit(
                 primary: {
@@ -121,17 +168,9 @@ struct PackingStationPage: View {
                 },
                 secondary: {
                     comparisonCard(order)
-                    instructionsCard
                 }
             )
         } else {
-            BakeHero(
-                title: "ตรวจสอบสินค้า",
-                subtitle: "สแกนเทียบจำนวนสินค้ากับออเดอร์ก่อนส่งมอบ",
-                symbol: "viewfinder",
-                tag: "ผลจำลอง"
-            )
-
             BakeCard {
                 EmptyState(
                     icon: .inbox,
@@ -144,83 +183,36 @@ struct PackingStationPage: View {
         }
     }
 
-    // MARK: - Order picker
+    // MARK: - Order summary (compact)
 
-    private func orderPickerCard(_ order: Order) -> some View {
+    private func orderSummaryCard(_ order: Order) -> some View {
         BakeCard {
-            VStack(alignment: .leading, spacing: BakeSpace.s4) {
-                BakeCardHeader(
-                    title: "ออเดอร์ที่ตรวจสอบ",
-                    icon: .orders,
-                    accessory: AnyView(StatusBadge(order: order))
-                )
-
-                VStack(alignment: .leading, spacing: BakeSpace.s2) {
-                    Text("เลือกออเดอร์")
-                        .font(BakeFont.smallStrong)
-                        .foregroundStyle(BakeColor.text)
-
-                    Menu {
-                        ForEach(selectableOrders) { item in
-                            Button {
-                                selectedId = item.id
-                                lastCapture = nil
-                            } label: {
-                                Text("\(item.id) — \(item.customer) (\(item.items.count) รายการ)")
-                            }
-                        }
-                    } label: {
-                        HStack(spacing: BakeSpace.s2) {
-                            Text("\(order.id) — \(order.customer) (\(order.items.count) รายการ)")
-                                .font(BakeFont.small)
-                                .foregroundStyle(BakeColor.text)
-                                .lineLimit(1)
-                            Spacer(minLength: 0)
-                            Icon(name: .chevronRight, size: 13)
-                                .foregroundStyle(BakeColor.dune)
-                        }
-                        .padding(.horizontal, BakeSpace.s3)
-                        .frame(height: 44)
-                        .frame(maxWidth: .infinity)
-                        .background(BakeColor.surface)
-                        .clipShape(RoundedRectangle(cornerRadius: BakeRadius.md, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: BakeRadius.md, style: .continuous)
-                                .stroke(BakeColor.border, lineWidth: 1)
-                        )
+            VStack(alignment: .leading, spacing: BakeSpace.s3) {
+                HStack(spacing: BakeSpace.s3) {
+                    if let first = order.items.first {
+                        ProductGlyph(productId: first.productId, size: 44)
                     }
-                    .disabled(isLocked)
-                }
-
-                BakeSeparator()
-
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: BakeSpace.s3) {
-                        ForEach(order.items) { item in
-                            VStack(spacing: 5) {
-                                ProductGlyph(productId: item.productId, size: 46)
-                                Text("×\(item.expectedQty)")
-                                    .font(BakeFont.tiny.weight(.semibold))
-                                    .foregroundStyle(BakeColor.wood)
-                            }
-                        }
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(order.id)
+                            .font(BakeFont.mono)
+                            .foregroundStyle(BakeColor.wood)
+                        Text(order.customer)
+                            .font(BakeFont.small)
+                            .foregroundStyle(BakeColor.muted)
+                            .lineLimit(1)
                     }
-                    .padding(.vertical, 2)
+                    Spacer(minLength: 0)
+                    StatusBadge(order: order)
                 }
 
-                VStack(spacing: BakeSpace.s3) {
-                    DefRow(key: "ลูกค้า", value: order.customer)
-                    DefRow(
-                        key: "จำนวนที่สั่งรวม",
-                        value: "\(OrderMath.totalQty(order)) ชิ้น · \(order.items.count) รายการ"
-                    )
-                    DefRow(key: "เวลาที่อัปเดต", value: BakeFormat.dateTime(order.updatedAt))
-                    DefRow(key: "สถานะการส่งมอบ", value: Labels.handover(order.handover))
+                HStack(spacing: BakeSpace.s2) {
+                    Label("\(order.items.count) รายการ", systemImage: "list.bullet")
+                    Text("·")
+                    Label("\(OrderMath.totalQty(order)) ชิ้น", systemImage: "number")
                 }
-
-                BakeButton(title: "รายละเอียดออเดอร์", icon: .orders, variant: .ghost, block: true) {
-                    router.go(.orderDetail(order.id))
-                }
+                .font(BakeFont.tiny)
+                .foregroundStyle(BakeColor.muted)
+                .labelStyle(.titleAndIcon)
             }
         }
     }
@@ -232,18 +224,11 @@ struct PackingStationPage: View {
             VStack(alignment: .leading, spacing: BakeSpace.s4) {
                 BakeCardHeader(
                     title: "ผลการเปรียบเทียบ",
-                    subtitle: draft.map { "สแกนเมื่อ \(BakeFormat.dateTime($0.scannedAt)) · ผลจำลอง" }
+                    subtitle: draft.map { "สแกนเมื่อ \(BakeFormat.time($0.scannedAt)) · ผลจำลอง" }
                         ?? "ยังไม่ได้สแกนออเดอร์นี้",
                     icon: .shield,
                     accessory: isScanning
-                        ? AnyView(
-                            HStack(spacing: 6) {
-                                ProgressView().controlSize(.small).tint(BakeColor.terra)
-                                Text("กำลังประมวลผล…")
-                                    .font(BakeFont.tiny)
-                                    .foregroundStyle(BakeColor.muted)
-                            }
-                        )
+                        ? AnyView(ProgressView().controlSize(.small).tint(BakeColor.terra))
                         : nil
                 )
 
@@ -252,7 +237,7 @@ struct PackingStationPage: View {
                 if draft != nil {
                     SummaryStrip(tiles: [
                         ("สั่งรวม", "\(summary.totalExpected)", BakeColor.text),
-                        ("ตรวจพบรวม", "\(summary.totalEffective)", BakeColor.text),
+                        ("ตรวจพบ", "\(summary.totalEffective)", BakeColor.text),
                         ("ขาด", "\(summary.missing)", BakeColor.errorStrong),
                         ("เกิน", "\(summary.extra)", BakeColor.warningStrong),
                     ])
@@ -263,13 +248,6 @@ struct PackingStationPage: View {
                             openEditSheet(for: productId)
                         }
                     )
-                } else {
-                    Notice(tone: .neutral, icon: .scan) {
-                        Text("กด “ตรวจสอบด้วยการจำลอง” เพื่อจำลองผลการตรวจจับสินค้า ระบบจะเทียบจำนวนให้อัตโนมัติ")
-                            .font(BakeFont.small)
-                            .foregroundStyle(BakeColor.muted)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
                 }
 
                 if isLocked {
@@ -280,62 +258,54 @@ struct PackingStationPage: View {
                     }
                 }
 
-                BakeSeparator()
-
-                VStack(spacing: BakeSpace.s2) {
-                    BakeButton(
-                        title: "ตรวจสอบอีกครั้ง",
-                        icon: .refresh,
-                        variant: .ghost,
-                        block: true,
-                        isEnabled: !isLocked,
-                        isLoading: isScanning && draft != nil
-                    ) {
-                        runScan(nil)
-                    }
-
-                    if (order.status == .passed || order.status == .handedOver) && draft == nil && !isScanning {
-                        BakeButton(title: "ดูผลการตรวจสอบ", icon: .shield, variant: .secondary, block: true) {
-                            router.go(.result(order.id))
-                        }
-                        if order.handover == .ready {
-                            BakeButton(title: "ไปส่งมอบ", icon: .truck, variant: .success, block: true) {
-                                router.go(.handover(order.id))
-                            }
-                        }
-                    } else {
-                        BakeButton(
-                            title: "ยืนยันผลตรวจสอบ",
-                            icon: .shield,
-                            variant: .success,
-                            block: true,
-                            isEnabled: draft != nil && outcome == .passed && !isScanning
-                        ) {
-                            showConfirm = true
-                        }
-
-                        if draft != nil, outcome != .passed {
-                            Text("ต้องให้ทุกรายการตรงกันก่อนจึงจะยืนยันผลได้")
-                                .font(BakeFont.tiny)
-                                .foregroundStyle(BakeColor.muted)
-                                .frame(maxWidth: .infinity)
-                                .multilineTextAlignment(.center)
-                        }
-                    }
-                }
+                actions(order)
             }
         }
     }
 
-    private var instructionsCard: some View {
-        BakeCard {
-            VStack(alignment: .leading, spacing: BakeSpace.s3) {
-                BakeCardHeader(title: "วิธีใช้งาน", icon: .info)
+    @ViewBuilder
+    private func actions(_ order: Order) -> some View {
+        VStack(spacing: BakeSpace.s2) {
+            if draft != nil {
+                BakeButton(
+                    title: "ตรวจสอบอีกครั้ง",
+                    icon: .refresh,
+                    variant: .secondary,
+                    block: true,
+                    isEnabled: !isLocked,
+                    isLoading: isScanning
+                ) {
+                    runScan(nil)
+                }
+            }
 
-                InstructionStep(number: 1, text: "เลือกออเดอร์ที่ต้องการตรวจสอบจากเมนูด้านบน")
-                InstructionStep(number: 2, text: "วางสินค้าแต่ละชนิดให้อยู่ในกรอบกล้อง แล้วกด “จับภาพและตรวจสอบ”")
-                InstructionStep(number: 3, text: "หากไม่สะดวกใช้กล้อง กด “ตรวจสอบด้วยการจำลอง” เพื่อสาธิตขั้นตอน")
-                InstructionStep(number: 4, text: "แก้ไขรายการที่ไม่ตรง แล้วกด “ยืนยันผลตรวจสอบ” เมื่อจำนวนครบถ้วน")
+            if (order.status == .passed || order.status == .handedOver) && draft == nil && !isScanning {
+                BakeButton(title: "ดูผลการตรวจสอบ", icon: .shield, variant: .secondary, block: true) {
+                    router.go(.result(order.id))
+                }
+                if order.handover == .ready {
+                    BakeButton(title: "ไปส่งมอบ", icon: .truck, variant: .success, block: true) {
+                        router.go(.handover(order.id))
+                    }
+                }
+            } else {
+                BakeButton(
+                    title: "ยืนยันผลตรวจสอบ",
+                    icon: .shield,
+                    variant: .success,
+                    block: true,
+                    isEnabled: draft != nil && outcome == .passed && !isScanning
+                ) {
+                    showConfirm = true
+                }
+
+                if draft != nil, outcome != .passed {
+                    Text("ต้องให้ทุกรายการตรงกันก่อนจึงจะยืนยันผลได้")
+                        .font(BakeFont.tiny)
+                        .foregroundStyle(BakeColor.muted)
+                        .frame(maxWidth: .infinity)
+                        .multilineTextAlignment(.center)
+                }
             }
         }
     }
@@ -423,27 +393,6 @@ struct PackingStationPage: View {
                 },
                 onCancel: {}
             )
-        }
-    }
-}
-
-struct InstructionStep: View {
-    var number: Int
-    var text: String
-
-    var body: some View {
-        HStack(alignment: .top, spacing: BakeSpace.s3) {
-            Text("\(number)")
-                .font(BakeFont.tiny.weight(.bold))
-                .foregroundStyle(BakeColor.terraStrong)
-                .frame(width: 22, height: 22)
-                .background(BakeColor.terraSoft)
-                .clipShape(Circle())
-            Text(text)
-                .font(BakeFont.small)
-                .foregroundStyle(BakeColor.text)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
         }
     }
 }

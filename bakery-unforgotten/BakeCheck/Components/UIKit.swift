@@ -42,29 +42,8 @@ struct BakeButton: View {
         }
     }
 
-    private var background: Color {
-        switch variant {
-        case .primary: BakeColor.terra
-        case .secondary: BakeColor.surface
-        case .ghost: .clear
-        case .success: BakeColor.success
-        case .dangerOutline: .clear
-        }
-    }
-
-    private var borderColor: Color {
-        switch variant {
-        case .secondary: BakeColor.border
-        case .dangerOutline: BakeColor.errorBorder
-        default: .clear
-        }
-    }
-
-    private var borderWidth: CGFloat {
-        switch variant {
-        case .secondary, .dangerOutline: 1
-        default: 0
-        }
+    private var shape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: BakeRadius.md, style: .continuous)
     }
 
     var body: some View {
@@ -87,20 +66,33 @@ struct BakeButton: View {
                 }
             }
             .foregroundStyle(foreground)
-            .padding(.horizontal, size == .small ? 12 : 16)
-            .frame(height: size == .small ? 34 : 44)
+            .padding(.horizontal, size == .small ? 14 : 18)
+            .frame(height: size == .small ? 36 : 48)
             .frame(maxWidth: block ? CGFloat.infinity : nil)
-            .background(background)
-            .clipShape(RoundedRectangle(cornerRadius: BakeRadius.md, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: BakeRadius.md, style: .continuous)
-                    .stroke(borderColor, lineWidth: borderWidth)
-            )
-            .contentShape(Rectangle())
+            .background { fill }
+            .contentShape(shape)
         }
         .buttonStyle(.plain)
         .disabled(!isEnabled || isLoading)
         .opacity(isEnabled ? 1 : 0.45)
+    }
+
+    /// Liquid Glass background: a tinted glass for filled variants, clear glass
+    /// for secondary, nothing for ghost, and a hairline outline for danger.
+    @ViewBuilder
+    private var fill: some View {
+        switch variant {
+        case .primary:
+            Color.clear.bakeTintedGlass(BakeColor.terra, in: shape)
+        case .success:
+            Color.clear.bakeTintedGlass(BakeColor.success, in: shape)
+        case .secondary:
+            Color.clear.bakeGlass(in: shape, interactive: true)
+        case .ghost:
+            Color.clear
+        case .dangerOutline:
+            shape.stroke(BakeColor.errorBorder, lineWidth: 1)
+        }
     }
 }
 

@@ -36,7 +36,7 @@ struct VerificationResultPage: View {
                 }
             }
         }
-        .navigationTitle("")
+        .navigationTitle("ผลการตรวจสอบ")
         .bakeInlineTitle()
         .onDisappear {
             scanTask?.cancel()

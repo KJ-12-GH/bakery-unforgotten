@@ -1,6 +1,6 @@
 # BakeCheck 🥐
 
-**ระบบตรวจสอบจำนวนสินค้าเบเกอรีก่อนส่งมอบ** — a Hackathon prototype.
+**ระบบตรวจสอบจำนวนสินค้าเบเกอรีก่อนส่งมอบ** — a Swift hackathon prototype (SwiftUI, iOS).
 
 Bakery staff sometimes pack the wrong number of items. When the delivery driver collects the
 order and the customer finds the mistake, the driver gets the complaint even though the error
@@ -14,41 +14,15 @@ Core workflow:
 → แก้ไขข้อผิดพลาด → ยืนยันผล → ส่งมอบให้พนักงานขับรถ
 ```
 
-There are two implementations of the same product in this repository:
-
-| | Folder | Stack | Status |
-| --- | --- | --- | --- |
-| Web app | `web/` | React + TypeScript + Vite | Runs in the browser (`npm run dev`) |
-| iOS app | `bakery-unforgotten/` | SwiftUI (iOS 27 SDK) | Runs in the Xcode Simulator |
-
-Both share the same design tokens, seed data, business rules and Thai-first copy. Each has its
-own README-style notes: see `web/README.md` for the web build, and the **iOS app** section below.
-
 ---
 
-## ⚠️ What is simulated
+## Run it
 
-Neither app has a backend, database, camera model or AI service. Both are UI prototypes.
+A native SwiftUI app targeting **iOS 27** (also builds for macOS). No third-party dependencies.
 
-| Area | Status |
-| --- | --- |
-| Order data | Mock data, kept in `localStorage` (web) / `UserDefaults` (iOS) |
-| Product detection | **Simulated** — scripted per-order results |
-| Camera | Real capture, but the captured frame is **not analysed** |
-| Persistence | Device-local only — does not sync across devices |
-| Authentication | None — a sample staff profile is hard-coded |
-
-Every simulated result is labelled `โหมดสาธิต` / `ผลจำลอง` in the UI, so nothing implies that a
-real AI model produced it.
-
----
-
-## iOS app (SwiftUI)
-
-The iOS app is a port of the web app. It targets **iOS 27** and is written in SwiftUI only —
-no third-party dependencies.
-
-### Run it
+> **Requires Xcode 26 or newer** (iOS 26 SDK) — the UI uses Liquid Glass APIs
+> (`glassEffect`, `tabBarMinimizeBehavior`). They are gated behind `#available`,
+> but the SDK must know them at compile time, so an older Xcode will not build.
 
 ```bash
 open bakery-unforgotten.xcodeproj     # then ⌘R in Xcode
@@ -66,31 +40,49 @@ xcodebuild -project bakery-unforgotten.xcodeproj \
 The Xcode project uses `PBXFileSystemSynchronizedRootGroup`, so any `.swift` file added under
 `bakery-unforgotten/` is picked up automatically — no `project.pbxproj` edits are needed.
 
-The target lists macOS as a supported platform, so **My Mac** also builds and runs. iOS-only APIs
-(`navigationBarTitleDisplayMode`, `toolbar(_:for: .navigationBar)`,
-`ToolbarItemPlacement.topBarLeading/.topBarTrailing`, `textInputAutocapitalization`) are wrapped in
-`Components/PlatformCompat.swift`; on macOS each helper falls back to its native equivalent or a
-no-op. Both platforms build cleanly for Debug and Release.
+---
+
+## ⚠️ What is simulated
+
+The app has no backend, database, or AI service — it is a **UI prototype**.
+
+| Area | Status |
+| --- | --- |
+| Order data | Mock data, kept on-device in `UserDefaults` |
+| Product detection | **Simulated** — scripted, deterministic per-order results |
+| Camera | Real `AVCaptureSession` capture, but the frame is **not analysed** |
+| Persistence | Device-local only — does not sync across devices |
+| Authentication | None — a sample staff profile is hard-coded |
+
+Every simulated result is labelled `โหมดสาธิต` / `ผลจำลอง` in the UI, so nothing implies that a
+real AI model produced it. `ScanService.simulate(order:)` is the only place that knows about the
+fake detector — swapping it for a real vision service does not touch the rules, store or views.
+
+---
+
+## Design
+
+The UI is built to feel native to modern iOS, not ported from the web:
+
+- **Liquid Glass** (iOS/macOS 26+) on the primary buttons, navigation bars and the minimizing
+  tab bar, with an `.ultraThinMaterial` fallback on older systems (gated by `#available`).
+- **Native navigation** — real large titles + toolbars (no custom header bar).
+- **Native Settings** built on `Form` (grouped sections, system toggles and pickers).
+- **Dark Mode** support throughout: every surface/text/status colour is an appearance-aware
+  light/dark pair, while the warm bakery palette stays as the accent.
+- **Dynamic Type** — typography maps to relative text styles so it scales with the system.
+- Decluttered for a 5-minute pitch: the packing station is just **capture → compare → confirm**.
 
 ### Screens
 
-The app has **two areas**, and it opens straight into the verification station:
+Two tabs; everything else is pushed on top so the tab bar stays calm.
 
 | Tab | Screen | Notes |
 | --- | --- | --- |
-| ตรวจสอบสินค้า | **Smart Packing Station** | Default screen: capture → compare → correct → confirm |
-| ตั้งค่า | Settings | Store details, notifications, demo data, and the entrance to the dashboard |
+| ตรวจสอบสินค้า | **Packing Station** | Default screen. Order picker lives in the toolbar. |
+| ตั้งค่า | Settings | Store details, notifications, demo data, entrance to the dashboard |
 
-Everything else is pushed on top of the active area, so the tab bar stays quiet:
-
-| Pushed screen | Reached from |
-| --- | --- |
-| ภาพรวม (Dashboard) | **the bottom of Settings** — "เปิดหน้า Dashboard" |
-| จัดการออเดอร์ | Dashboard → ดูออเดอร์ทั้งหมด, or the station's empty state |
-| รายละเอียดออเดอร์ | Order rows, search results, notifications |
-| ผลการตรวจสอบ | Packing station, order detail, history |
-| ส่งมอบสินค้า | Dashboard, order rows, the result screen |
-| ประวัติออเดอร์ | Dashboard → ดูประวัติการตรวจสอบ |
+Pushed: ภาพรวม (Dashboard), จัดการออเดอร์, รายละเอียดออเดอร์, ผลการตรวจสอบ, ส่งมอบสินค้า, ประวัติออเดอร์.
 
 ### Business rules (enforced in the store, not the views)
 
@@ -105,58 +97,32 @@ Everything else is pushed on top of the active area, so the tab bar stays quiet:
 | An order can be handed over exactly once | `AppStore.handOver` |
 | Handed-over orders are frozen | `AppStore.recordScan` |
 
-### Layout
+---
 
-- `Core/` — models, design tokens, SF Symbol mapping, `Verification` rules, simulated scanner
-- `Data/SeedData.swift` — products, staff, drivers, settings, 11 orders, 6 scan records
-- `State/` — `AppStore` (single source of truth + persistence), `Router` (2 areas + destinations), `ToastCenter`
-- `Components/` — buttons, chips, cards, comparison list, result banner, sheets, camera panel,
-  and `Decor.swift` (ambient background, illustrated hero, product glyphs, iPad split layout)
+## Layout
+
+- `Core/` — models, design system (colours, type, Liquid Glass helpers), SF Symbol mapping,
+  `Verification` rules, simulated scanner, Thai formatters
+- `Data/SeedData.swift` — products, staff, drivers, settings, seed orders and scan records
+- `State/` — `AppStore` (single source of truth + persistence), `Router`, `ToastCenter`
+- `Components/` — buttons, cards, comparison list, result banner, sheets, camera panel, decor
 - `Pages/` — one file per screen
-- `RootView.swift` — `TabView` shell, scaffolds, destination routing
+- `RootView.swift` — `TabView` shell, navigation stacks, destination routing
 
-### Visual language
+---
 
-The UI leans on native Apple patterns rather than the web prototype's flat panels:
-
-- Illustrated gradient hero on every primary screen, with a thin SF Symbol illustration
-- Cards with continuous 20pt corners and soft elevation instead of 1px borders
-- Product artwork (`ProductGlyph`) in order rows, item lists and the station
-- Rounded, `.snappy` numeric transitions on dashboard metrics
-- Large in-page titles with a floating back button (native navigation bar kept empty)
-- Adaptive layouts: single column on iPhone, balanced two columns on iPad
-  (`BakeSplit`), 2–4 stat columns, and a narrower reading column for Settings
-
-`ScanService.simulate` is the only place that knows about the fake detector, so replacing it with
-a real computer-vision service does not touch the rules, the store or the views.
-
-### Business-rule check
+## Business-rule check
 
 A CLI harness compiles the app's *real* `Core`/`Data`/`State` sources and exercises the rules —
-no duplicate implementation, no simulator needed:
+no duplicate implementation, no simulator needed (requires a Mac with a Swift toolchain):
 
 ```bash
 ./ios-scripts/logic-check.sh
 ```
 
-Latest run: **96 checks, 96 passed, 0 failed** (exit code 0). It covers classification, comparison
-rows, outcome precedence, verification gating, summary arithmetic, the simulated detector
-profiles, seed-data integrity, the full store lifecycle (scan → correct → confirm → hand over →
-frozen), notifications, settings round-trip and Thai label/format text.
-
----
-
-## Differences from the web app
-
-| Area | Web | iOS |
-| --- | --- | --- |
-| Navigation | 5-area sidebar | 2 tabs + pushed screens |
-| Icons | hand-rolled SVG set | SF Symbols + product emoji glyphs |
-| Font | Noto Sans Thai (bundled) | system Thai font (rounded for titles) |
-| History date range | from/to date pickers | period chips (ทั้งหมด / วันนี้ / 7 วัน / 30 วัน) |
-| Camera | `getUserMedia` | `AVCaptureSession` (`unsupported` on the Simulator, falls back to a simulated scan) |
-
-Everything else — tokens, seed data, wording and rules — is identical.
+It covers classification, comparison rows, outcome precedence, verification gating, summary
+arithmetic, the simulated detector profiles, seed-data integrity, the full store lifecycle
+(scan → correct → confirm → hand over → frozen), notifications, settings and Thai label/format text.
 
 ---
 
