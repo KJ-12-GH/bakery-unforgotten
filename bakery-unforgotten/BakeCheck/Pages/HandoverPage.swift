@@ -40,7 +40,7 @@ struct HandoverPage: View {
     }
 
     var body: some View {
-        PushedPageScaffold {
+        PushedPageScaffold(maxContentWidth: 820) {
             PageHeader(
                 title: "ส่งมอบสินค้า",
                 subtitle: "ยืนยันการรับมอบออเดอร์ที่ตรวจสอบผ่านแล้วให้พนักงานขับรถ",
@@ -48,7 +48,7 @@ struct HandoverPage: View {
             )
 
             BakeButton(title: "ไปที่จัดการออเดอร์", icon: .orders, variant: .ghost, block: true) {
-                router.select(.orders)
+                router.go(.orders)
             }
 
             SectionHead(title: "พร้อมส่งมอบ", meta: "เฉพาะออเดอร์ที่ยืนยันผลตรวจสอบแล้วเท่านั้น")
@@ -61,7 +61,7 @@ struct HandoverPage: View {
                         text: "ออเดอร์จะปรากฏที่นี่หลังผ่านการยืนยันผลตรวจสอบจำนวนสินค้าแล้ว",
                         actionTitle: "ไปตรวจสอบสินค้า",
                         actionIcon: .scan
-                    ) { router.select(.packing) }
+                    ) { router.startScanning() }
                 }
             } else {
                 LazyVStack(spacing: BakeSpace.s3) {
@@ -109,7 +109,7 @@ struct HandoverPage: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .navigationTitle("ส่งมอบสินค้า")
+        .navigationTitle("")
         .bakeInlineTitle()
         .sheet(item: Binding(
             get: { targetId.map(IdentifiedID.init(id:)) },

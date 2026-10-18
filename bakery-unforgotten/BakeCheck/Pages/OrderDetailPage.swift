@@ -22,7 +22,7 @@ struct OrderDetailPage: View {
             if let order = store.order(orderId) {
                 content(for: order)
             } else {
-                PushedPageScaffold {
+                PushedPageScaffold(maxContentWidth: 820) {
                     BakeCard {
                         EmptyState(
                             icon: .inbox,
@@ -30,12 +30,12 @@ struct OrderDetailPage: View {
                             text: "ออเดอร์อาจถูกลบหรือรหัสไม่ถูกต้อง",
                             actionTitle: "กลับไปยังออเดอร์",
                             actionIcon: .arrowLeft
-                        ) { router.select(.orders) }
+                        ) { router.go(.orders) }
                     }
                 }
             }
         }
-        .navigationTitle(orderId)
+        .navigationTitle("")
         .bakeInlineTitle()
     }
 
@@ -166,7 +166,7 @@ struct OrderDetailPage: View {
                     }
                 } else if order.status != .handedOver {
                     BakeButton(title: "ไปตรวจสอบสินค้า", icon: .scan, variant: .primary, block: true) {
-                        router.go(.packing(order.id), in: .packing)
+                        router.go(.packing(order.id))
                     }
                 }
             }

@@ -71,7 +71,7 @@ struct TopBar: View {
         .sheet(isPresented: $showSearch) {
             SearchSheet { orderId in
                 showSearch = false
-                router.go(.orderDetail(orderId), in: .orders)
+                router.go(.orderDetail(orderId))
             }
         }
     }
@@ -125,7 +125,7 @@ struct TopBar: View {
         guard !term.isEmpty else { return }
         if let match = store.orders.first(where: { $0.id.uppercased().contains(term) }) {
             query = ""
-            router.go(.orderDetail(match.id), in: .orders)
+            router.go(.orderDetail(match.id))
         } else {
             toasts.show(.warning, "ไม่พบออเดอร์", "ไม่พบออเดอร์ที่ตรงกับ “\(query.trimmingCharacters(in: .whitespaces))”")
         }
@@ -136,7 +136,7 @@ struct TopBar: View {
         let destination: Destination = notification.opensHandover
             ? .handover(notification.orderId)
             : .packing(notification.orderId)
-        router.go(destination, in: notification.opensHandover ? .orders : .packing)
+        router.go(destination)
     }
 }
 

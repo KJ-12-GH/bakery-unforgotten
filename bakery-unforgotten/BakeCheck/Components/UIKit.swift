@@ -137,28 +137,50 @@ struct StatCard: View {
     var support: String
 
     var body: some View {
-        BakeCard(padding: BakeSpace.s4) {
+        VStack(alignment: .leading, spacing: BakeSpace.s3) {
             HStack(alignment: .top, spacing: BakeSpace.s3) {
-                VStack(alignment: .leading, spacing: BakeSpace.s1) {
-                    Text(label)
-                        .font(BakeFont.smallStrong)
-                        .foregroundStyle(BakeColor.muted)
-                    Text("\(value)")
-                        .font(BakeFont.stat)
-                        .foregroundStyle(BakeColor.text)
-                    Text(support)
-                        .font(BakeFont.tiny)
-                        .foregroundStyle(BakeColor.muted)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+                Text(label)
+                    .font(BakeFont.smallStrong)
+                    .foregroundStyle(BakeColor.muted)
+                    .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
-                Icon(name: icon, size: 19)
-                    .foregroundStyle(tone.foreground)
-                    .padding(9)
-                    .background(tone.background)
-                    .clipShape(RoundedRectangle(cornerRadius: BakeRadius.sm, style: .continuous))
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [tone.background, tone.background.opacity(0.5)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                    Icon(name: icon, size: 18)
+                        .foregroundStyle(tone.foreground)
+                }
+                .frame(width: 42, height: 42)
             }
+
+            Text("\(value)")
+                .font(.system(size: 34, weight: .bold, design: .rounded))
+                .foregroundStyle(BakeColor.text)
+                .contentTransition(.numericText())
+                .animation(.snappy(duration: 0.35), value: value)
+
+            Text(support)
+                .font(BakeFont.tiny)
+                .foregroundStyle(BakeColor.muted)
+                .fixedSize(horizontal: false, vertical: true)
         }
+        .padding(BakeSpace.s4)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: BakeRadius.card, style: .continuous)
+                .fill(BakeColor.surface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: BakeRadius.card, style: .continuous)
+                .stroke(BakeColor.borderSoft, lineWidth: 1)
+        )
+        .bakeCardShadow()
     }
 }
 
@@ -174,11 +196,20 @@ struct EmptyState: View {
 
     var body: some View {
         VStack(spacing: BakeSpace.s3) {
-            Icon(name: icon, size: 26)
-                .foregroundStyle(BakeColor.dune)
-                .padding(BakeSpace.s4)
-                .background(BakeColor.surfaceSunken)
-                .clipShape(Circle())
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [BakeColor.terraSoft, BakeColor.surfaceSunken],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 76, height: 76)
+                Icon(name: icon, size: 30)
+                    .foregroundStyle(BakeColor.bark)
+            }
+            .padding(.bottom, BakeSpace.s1)
 
             Text(title)
                 .font(BakeFont.cardTitle)
@@ -416,8 +447,7 @@ struct ProductSummaryList: View {
             ForEach(shown) { item in
                 let product = SeedData.product(item.productId)
                 HStack(spacing: BakeSpace.s2) {
-                    Text(product.emoji)
-                        .font(.system(size: 14))
+                    ProductGlyph(productId: item.productId, size: 26)
                     Text(product.name)
                         .font(BakeFont.small)
                         .foregroundStyle(BakeColor.text)
@@ -463,7 +493,10 @@ struct OrderRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: BakeSpace.s3) {
-            HStack(alignment: .top, spacing: BakeSpace.s2) {
+            HStack(alignment: .top, spacing: BakeSpace.s3) {
+                if let first = order.items.first {
+                    ProductGlyph(productId: first.productId, size: 42)
+                }
                 VStack(alignment: .leading, spacing: 2) {
                     Button(action: onOpen) {
                         Text(order.id)
@@ -504,12 +537,15 @@ struct OrderRow: View {
         }
         .padding(BakeSpace.s4)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(BakeColor.surface)
-        .clipShape(RoundedRectangle(cornerRadius: BakeRadius.lg, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: BakeRadius.lg, style: .continuous)
-                .stroke(isSelected ? BakeColor.terra : BakeColor.border, lineWidth: isSelected ? 1.5 : 1)
+        .background(
+            RoundedRectangle(cornerRadius: BakeRadius.card, style: .continuous)
+                .fill(BakeColor.surface)
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: BakeRadius.card, style: .continuous)
+                .stroke(isSelected ? BakeColor.terra : BakeColor.borderSoft, lineWidth: isSelected ? 1.5 : 1)
+        )
+        .bakeCardShadow()
     }
 
     private func metric(_ label: String, _ value: String) -> some View {

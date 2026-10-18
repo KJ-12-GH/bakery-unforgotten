@@ -2,8 +2,9 @@
 //  RootView.swift
 //  BakeCheck
 //
-//  App shell: a five-area tab bar (which adapts to a sidebar on iPad) where
-//  every area owns its own navigation stack, plus the shared toast overlay.
+//  App shell: two areas only — the packing station (the default screen) and
+//  settings. Everything else is pushed on top, which keeps the tab bar calm on
+//  iPhone and lets the same code breathe on iPad.
 //
 
 import SwiftUI
@@ -16,10 +17,7 @@ struct BakeCheckRootView: View {
     var body: some View {
         ZStack(alignment: .top) {
             TabView(selection: $router.tab) {
-                area(.dashboard) { DashboardPage() }
-                area(.orders) { OrdersPage() }
                 area(.packing) { PackingStationPage(orderId: nil) }
-                area(.history) { HistoryPage() }
                 area(.settings) { SettingsPage() }
             }
             .tint(BakeColor.terra)
@@ -48,13 +46,17 @@ struct BakeCheckRootView: View {
     }
 }
 
-/// Renders any pushed screen. Shared by all five areas so a destination can be
+/// Renders any pushed screen. Shared by both areas so a destination can be
 /// reached from wherever it makes sense.
 struct DestinationView: View {
     var destination: Destination
 
     var body: some View {
         switch destination {
+        case .dashboard:
+            DashboardPage()
+        case .orders:
+            OrdersPage()
         case .orderDetail(let id):
             OrderDetailPage(orderId: id)
         case .packing(let id):
@@ -71,11 +73,19 @@ struct DestinationView: View {
 
 // MARK: - Shared page scaffold
 
-/// Root-screen layout: fixed custom top bar + scrolling content that stays
-/// readable on iPad thanks to a max content width.
+/// Root-screen layout: fixed custom top bar + scrolling content. The content
+/// column widens on iPad but never stretches to unreadable line lengths.
 struct RootPageScaffold<Content: View>: View {
     var tab: AppTab
+    /// Overrides the default reading width (settings prefers a narrower column).
+    var maxContentWidth: CGFloat? = nil
+    @Environment(\.horizontalSizeClass) private var sizeClass
+
     @ViewBuilder var content: () -> Content
+
+    private var width: CGFloat {
+        maxContentWidth ?? (sizeClass == .regular ? 1080 : 820)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -86,19 +96,27 @@ struct RootPageScaffold<Content: View>: View {
                 }
                 .padding(.horizontal, BakeSpace.s4)
                 .padding(.top, BakeSpace.s4)
-                .padding(.bottom, BakeSpace.s8)
-                .frame(maxWidth: 980)
+                .padding(.bottom, BakeSpace.s10)
+                .frame(maxWidth: width)
                 .frame(maxWidth: .infinity)
             }
+            .scrollIndicators(.hidden)
         }
-        .background(BakeColor.cream.ignoresSafeArea())
+        .background(BakeAmbientBackground())
         .bakeHidesNavigationBar()
     }
 }
 
 /// Pushed-screen layout: native navigation bar plus the same readable width.
 struct PushedPageScaffold<Content: View>: View {
+    var maxContentWidth: CGFloat? = nil
+    @Environment(\.horizontalSizeClass) private var sizeClass
+
     @ViewBuilder var content: () -> Content
+
+    private var width: CGFloat {
+        maxContentWidth ?? (sizeClass == .regular ? 1080 : 820)
+    }
 
     var body: some View {
         ScrollView {
@@ -107,10 +125,11 @@ struct PushedPageScaffold<Content: View>: View {
             }
             .padding(.horizontal, BakeSpace.s4)
             .padding(.top, BakeSpace.s4)
-            .padding(.bottom, BakeSpace.s8)
-            .frame(maxWidth: 980)
+            .padding(.bottom, BakeSpace.s10)
+            .frame(maxWidth: width)
             .frame(maxWidth: .infinity)
         }
-        .background(BakeColor.cream.ignoresSafeArea())
+        .scrollIndicators(.hidden)
+        .background(BakeAmbientBackground())
     }
 }

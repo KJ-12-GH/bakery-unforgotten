@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SettingsPage: View {
     @EnvironmentObject private var store: AppStore
+    @EnvironmentObject private var router: Router
     @EnvironmentObject private var toasts: ToastCenter
 
     @State private var showResetConfirm = false
@@ -18,10 +19,12 @@ struct SettingsPage: View {
     }
 
     var body: some View {
-        RootPageScaffold(tab: .settings) {
-            PageHeader(
+        RootPageScaffold(tab: .settings, maxContentWidth: 760) {
+            BakeHero(
                 title: "ตั้งค่า",
-                subtitle: "ตั้งค่าโปรไฟล์ร้าน การแจ้งเตือน และการตั้งค่าพื้นฐานของระบบ"
+                subtitle: "จัดการข้อมูลร้าน การแจ้งเตือน และข้อมูลสาธิต",
+                symbol: "cup.and.saucer.fill",
+                footnote: "BakeCheck · ต้นแบบสำหรับสาธิต"
             )
 
             BakeCard {
@@ -172,6 +175,8 @@ struct SettingsPage: View {
                     }
                 }
             }
+
+            dashboardCard
         }
         .sheet(isPresented: $showResetConfirm) {
             ConfirmDialogContent(
@@ -196,5 +201,67 @@ struct SettingsPage: View {
                 onCancel: {}
             )
         }
+    }
+
+    // MARK: - Dashboard entrance
+
+    /// The dashboard lives at the bottom of settings so the tab bar only holds
+    /// the two areas staff touch every day.
+    private var dashboardCard: some View {
+        BakeCard {
+            VStack(alignment: .leading, spacing: BakeSpace.s4) {
+                HStack(spacing: BakeSpace.s3) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [BakeColor.terraSoft, BakeColor.surfaceTint],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                        Icon(name: .dashboard, size: 20)
+                            .foregroundStyle(BakeColor.bark)
+                    }
+                    .frame(width: 48, height: 48)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("ศูนย์ควบคุมร้าน")
+                            .font(BakeFont.cardTitle)
+                            .foregroundStyle(BakeColor.text)
+                        Text("ดูตัวเลขภาพรวม จัดการออเดอร์ และประวัติการตรวจสอบ")
+                            .font(BakeFont.tiny)
+                            .foregroundStyle(BakeColor.muted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 0)
+                }
+
+                HStack(spacing: BakeSpace.s2) {
+                    miniMetric("\(store.orders.count)", "ออเดอร์")
+                    miniMetric("\(store.orders.filter { $0.status == .pending }.count)", "รอตรวจ")
+                    miniMetric("\(store.scans.count)", "บันทึก")
+                }
+
+                BakeButton(title: "เปิดหน้า Dashboard", icon: .dashboard, variant: .primary, block: true) {
+                    router.go(.dashboard)
+                }
+            }
+        }
+    }
+
+    private func miniMetric(_ value: String, _ label: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(value)
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .foregroundStyle(BakeColor.wood)
+            Text(label)
+                .font(BakeFont.tiny)
+                .foregroundStyle(BakeColor.muted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(BakeSpace.s2)
+        .background(BakeColor.surfaceSunken)
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 }

@@ -121,6 +121,7 @@ enum BakeRadius {
     static let md: CGFloat = 12
     static let lg: CGFloat = 16
     static let xl: CGFloat = 22
+    static let card: CGFloat = 20
     static let pill: CGFloat = 999
 }
 
@@ -150,7 +151,8 @@ enum BakeFont {
 
 // MARK: - Reusable surface
 
-/// Rounded white card with a soft border, matching the web `Card`.
+/// Rounded white card with a soft border and gentle elevation, matching the
+/// web `Card` but with the depth Apple surfaces use.
 struct BakeCard<Content: View>: View {
     var padding: CGFloat = BakeSpace.s4
     @ViewBuilder var content: () -> Content
@@ -161,12 +163,15 @@ struct BakeCard<Content: View>: View {
         }
         .padding(padding)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(BakeColor.surface)
-        .clipShape(RoundedRectangle(cornerRadius: BakeRadius.lg, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: BakeRadius.lg, style: .continuous)
-                .stroke(BakeColor.border, lineWidth: 1)
+        .background(
+            RoundedRectangle(cornerRadius: BakeRadius.card, style: .continuous)
+                .fill(BakeColor.surface)
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: BakeRadius.card, style: .continuous)
+                .stroke(BakeColor.borderSoft, lineWidth: 1)
+        )
+        .bakeCardShadow()
     }
 }
 

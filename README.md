@@ -74,18 +74,23 @@ no-op. Both platforms build cleanly for Debug and Release.
 
 ### Screens
 
-Five tabs, each owning its own `NavigationStack`:
+The app has **two areas**, and it opens straight into the verification station:
 
 | Tab | Screen | Notes |
 | --- | --- | --- |
-| ภาพรวม | Dashboard | Metrics, alerts and recent orders, all derived from one store |
-| จัดการออเดอร์ | Order management | Search, status filters, order detail with item list |
-| ตรวจสอบสินค้า | **Smart Packing Station** | Highest priority: capture → compare → correct → confirm |
-| ประวัติออเดอร์ | Order history | Period filter, outcome filter, record detail |
-| ตั้งค่า | Settings | Store name, staff profile, notification toggles |
+| ตรวจสอบสินค้า | **Smart Packing Station** | Default screen: capture → compare → correct → confirm |
+| ตั้งค่า | Settings | Store details, notifications, demo data, and the entrance to the dashboard |
 
-Supporting screens: verification result (comparison table + gating), delivery handover, and the
-global search sheet.
+Everything else is pushed on top of the active area, so the tab bar stays quiet:
+
+| Pushed screen | Reached from |
+| --- | --- |
+| ภาพรวม (Dashboard) | **the bottom of Settings** — "เปิดหน้า Dashboard" |
+| จัดการออเดอร์ | Dashboard → ดูออเดอร์ทั้งหมด, or the station's empty state |
+| รายละเอียดออเดอร์ | Order rows, search results, notifications |
+| ผลการตรวจสอบ | Packing station, order detail, history |
+| ส่งมอบสินค้า | Dashboard, order rows, the result screen |
+| ประวัติออเดอร์ | Dashboard → ดูประวัติการตรวจสอบ |
 
 ### Business rules (enforced in the store, not the views)
 
@@ -104,10 +109,23 @@ global search sheet.
 
 - `Core/` — models, design tokens, SF Symbol mapping, `Verification` rules, simulated scanner
 - `Data/SeedData.swift` — products, staff, drivers, settings, 11 orders, 6 scan records
-- `State/` — `AppStore` (single source of truth + persistence), `Router`, `ToastCenter`
-- `Components/` — buttons, chips, cards, comparison list, result banner, sheets, camera panel
+- `State/` — `AppStore` (single source of truth + persistence), `Router` (2 areas + destinations), `ToastCenter`
+- `Components/` — buttons, chips, cards, comparison list, result banner, sheets, camera panel,
+  and `Decor.swift` (ambient background, illustrated hero, product glyphs, iPad split layout)
 - `Pages/` — one file per screen
 - `RootView.swift` — `TabView` shell, scaffolds, destination routing
+
+### Visual language
+
+The UI leans on native Apple patterns rather than the web prototype's flat panels:
+
+- Illustrated gradient hero on every primary screen, with a thin SF Symbol illustration
+- Cards with continuous 20pt corners and soft elevation instead of 1px borders
+- Product artwork (`ProductGlyph`) in order rows, item lists and the station
+- Rounded, `.snappy` numeric transitions on dashboard metrics
+- Large in-page titles with a floating back button (native navigation bar kept empty)
+- Adaptive layouts: single column on iPhone, balanced two columns on iPad
+  (`BakeSplit`), 2–4 stat columns, and a narrower reading column for Settings
 
 `ScanService.simulate` is the only place that knows about the fake detector, so replacing it with
 a real computer-vision service does not touch the rules, the store or the views.
@@ -132,10 +150,10 @@ frozen), notifications, settings round-trip and Thai label/format text.
 
 | Area | Web | iOS |
 | --- | --- | --- |
-| Icons | hand-rolled SVG set | SF Symbols |
-| Font | Noto Sans Thai (bundled) | system Thai font |
+| Navigation | 5-area sidebar | 2 tabs + pushed screens |
+| Icons | hand-rolled SVG set | SF Symbols + product emoji glyphs |
+| Font | Noto Sans Thai (bundled) | system Thai font (rounded for titles) |
 | History date range | from/to date pickers | period chips (ทั้งหมด / วันนี้ / 7 วัน / 30 วัน) |
-| Settings | permanent side panel at ≥1440px | pushed screen on every width |
 | Camera | `getUserMedia` | `AVCaptureSession` (`unsupported` on the Simulator, falls back to a simulated scan) |
 
 Everything else — tokens, seed data, wording and rules — is identical.

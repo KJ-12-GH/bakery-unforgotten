@@ -2,8 +2,9 @@
 //  DashboardPage.swift
 //  BakeCheck
 //
-//  Overview of the whole order book. Every number is derived from the single
-//  store, so it can never disagree with the order list.
+//  Overview of the whole order book. Reached from the bottom of the settings
+//  screen. Every number is derived from the single store, so it can never
+//  disagree with the order list.
 //
 
 import SwiftUI
@@ -31,15 +32,17 @@ struct DashboardPage: View {
     private var lastUpdated: Date? { recent.first?.updatedAt }
 
     var body: some View {
-        RootPageScaffold(tab: .dashboard) {
-            PageHeader(
-                title: "ภาพรวม",
-                subtitle: "ตรวจสอบความถูกต้องของออเดอร์ก่อนส่งมอบ",
-                note: BakeFormat.fullDate(Date())
+        PushedPageScaffold {
+            BakeHero(
+                title: store.settings.storeName,
+                subtitle: BakeFormat.fullDate(Date()),
+                symbol: "birthday.cake",
+                tag: "โหมดสาธิต",
+                footnote: "\(orders.count) ออเดอร์ · \(pending) รอตรวจสอบ · \(problems) ต้องแก้ไข"
             )
 
             BakeButton(title: "เริ่มตรวจสอบออเดอร์", icon: .scan, variant: .primary, block: true) {
-                router.select(.packing)
+                router.startScanning()
             }
 
             if problems > 0 {
@@ -50,14 +53,14 @@ struct DashboardPage: View {
                             .foregroundStyle(BakeColor.errorStrong)
                             .fixedSize(horizontal: false, vertical: true)
                         BakeButton(title: "ดูออเดอร์ที่ต้องแก้ไข", variant: .dangerOutline, size: .small) {
-                            router.select(.orders)
+                            router.openOrders()
                         }
                     }
                 }
             }
 
             LazyVGrid(
-                columns: [GridItem(.adaptive(minimum: 210), spacing: BakeSpace.s3)],
+                columns: [GridItem(.adaptive(minimum: 158), spacing: BakeSpace.s3)],
                 spacing: BakeSpace.s3
             ) {
                 StatCard(
@@ -92,18 +95,21 @@ struct DashboardPage: View {
 
             SectionHead(title: "ทางลัด", meta: "เหลืออีก \(inProgress) ออเดอร์ที่ต้องตรวจสอบ")
 
-            VStack(spacing: BakeSpace.s2) {
+            LazyVGrid(
+                columns: [GridItem(.adaptive(minimum: 300), spacing: BakeSpace.s3)],
+                spacing: BakeSpace.s3
+            ) {
                 QuickAction(
                     icon: .scan,
                     title: "ตรวจสอบออเดอร์",
                     desc: "สแกนเทียบจำนวนสินค้าก่อนส่งมอบ"
-                ) { router.select(.packing) }
+                ) { router.startScanning() }
 
                 QuickAction(
                     icon: .orders,
                     title: "ดูออเดอร์ทั้งหมด",
                     desc: "ทั้งหมด \(orders.count) ออเดอร์"
-                ) { router.select(.orders) }
+                ) { router.openOrders() }
 
                 QuickAction(
                     icon: .truck,
@@ -111,13 +117,13 @@ struct DashboardPage: View {
                     desc: readyToHandOver > 0
                         ? "พร้อมส่งมอบ \(readyToHandOver) ออเดอร์"
                         : "ยังไม่มีออเดอร์ที่พร้อมส่งมอบ"
-                ) { router.go(.handover(nil), in: .orders) }
+                ) { router.go(.handover(nil)) }
 
                 QuickAction(
                     icon: .history,
                     title: "ดูประวัติการตรวจสอบ",
                     desc: "\(store.scans.count) บันทึกการตรวจสอบ"
-                ) { router.select(.history) }
+                ) { router.go(.history(nil)) }
             }
 
             VStack(alignment: .leading, spacing: BakeSpace.s3) {
@@ -126,7 +132,7 @@ struct DashboardPage: View {
                     meta: "อัปเดตล่าสุด 5 รายการ",
                     accessoryTitle: "ดูทั้งหมด",
                     accessoryIcon: .arrowRight
-                ) { router.select(.orders) }
+                ) { router.openOrders() }
 
                 ForEach(recent) { order in
                     OrderRow(
@@ -137,20 +143,23 @@ struct DashboardPage: View {
                 }
             }
         }
+        .navigationTitle("ภาพรวม")
+        .bakeInlineTitle()
     }
 
     private func performPrimaryAction(for order: Order) {
         if order.status == .passed && order.handover == .ready {
-            router.go(.handover(order.id), in: .orders)
+            router.go(.handover(order.id))
         } else if order.status == .handedOver {
             router.go(.orderDetail(order.id))
         } else {
-            router.go(.packing(order.id), in: .packing)
+            router.startScanning(orderId: order.id)
         }
     }
 }
 
-/// Tappable shortcut row (web `.quick-action`).
+/// Tappable shortcut row (web `.quick-action`), restyled with an illustrated
+/// icon tile and a trailing chevron.
 struct QuickAction: View {
     var icon: IconName
     var title: String
@@ -160,11 +169,19 @@ struct QuickAction: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: BakeSpace.s3) {
-                Icon(name: icon, size: 20)
-                    .foregroundStyle(BakeColor.terraStrong)
-                    .frame(width: 44, height: 44)
-                    .background(BakeColor.terraSoft)
-                    .clipShape(RoundedRectangle(cornerRadius: BakeRadius.md, style: .continuous))
+                ZStack {
+                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [BakeColor.terraSoft, BakeColor.surfaceTint],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                    Icon(name: icon, size: 19)
+                        .foregroundStyle(BakeColor.bark)
+                }
+                .frame(width: 46, height: 46)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
@@ -173,19 +190,23 @@ struct QuickAction: View {
                     Text(desc)
                         .font(BakeFont.tiny)
                         .foregroundStyle(BakeColor.muted)
+                        .lineLimit(2)
                 }
                 Spacer(minLength: 0)
-                Icon(name: .chevronRight, size: 15)
+                Icon(name: .chevronRight, size: 14)
                     .foregroundStyle(BakeColor.dune)
             }
             .padding(BakeSpace.s3)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(BakeColor.surface)
-            .clipShape(RoundedRectangle(cornerRadius: BakeRadius.lg, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: BakeRadius.lg, style: .continuous)
-                    .stroke(BakeColor.border, lineWidth: 1)
+            .background(
+                RoundedRectangle(cornerRadius: BakeRadius.card, style: .continuous)
+                    .fill(BakeColor.surface)
             )
+            .overlay(
+                RoundedRectangle(cornerRadius: BakeRadius.card, style: .continuous)
+                    .stroke(BakeColor.borderSoft, lineWidth: 1)
+            )
+            .bakeCardShadow()
         }
         .buttonStyle(.plain)
     }

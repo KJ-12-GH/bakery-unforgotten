@@ -31,12 +31,12 @@ struct VerificationResultPage: View {
                             text: "ออเดอร์อาจถูกลบหรือรหัสไม่ถูกต้อง",
                             actionTitle: "กลับไปยังออเดอร์",
                             actionIcon: .arrowLeft
-                        ) { router.select(.orders) }
+                        ) { router.go(.orders) }
                     }
                 }
             }
         }
-        .navigationTitle("ผลการตรวจสอบ")
+        .navigationTitle("")
         .bakeInlineTitle()
         .onDisappear {
             scanTask?.cancel()
@@ -73,7 +73,7 @@ struct VerificationResultPage: View {
                         text: "เข้าสู่สถานีตรวจสอบสินค้าเพื่อสแกนเทียบจำนวนก่อนส่งมอบ",
                         actionTitle: "ไปตรวจสอบสินค้า",
                         actionIcon: .scan
-                    ) { router.go(.packing(order.id), in: .packing) }
+                    ) { router.go(.packing(order.id)) }
                 }
             } else {
                 BakeCard {
@@ -141,7 +141,7 @@ struct VerificationResultPage: View {
                                 ) { rescan(order) }
 
                                 BakeButton(title: "กลับไปแก้ไข", icon: .edit, variant: .ghost, block: true, isEnabled: !isScanning) {
-                                    router.go(.packing(order.id), in: .packing)
+                                    router.go(.packing(order.id))
                                 }
 
                                 BakeButton(
@@ -164,7 +164,7 @@ struct VerificationResultPage: View {
                             if isVerified {
                                 if order.handover == .ready {
                                     BakeButton(title: "ไปหน้าส่งมอบสินค้า", icon: .truck, variant: .success, block: true) {
-                                        router.go(.handover(order.id), in: .orders)
+                                        router.go(.handover(order.id))
                                     }
                                 } else {
                                     Notice(tone: .success, icon: .checkCircle) {
@@ -180,7 +180,7 @@ struct VerificationResultPage: View {
                             }
 
                             BakeButton(title: "กลับไปยังออเดอร์", icon: .arrowLeft, variant: .ghost, block: true) {
-                                router.go(.orderDetail(order.id), in: .orders)
+                                router.go(.orderDetail(order.id))
                             }
                         }
                     }

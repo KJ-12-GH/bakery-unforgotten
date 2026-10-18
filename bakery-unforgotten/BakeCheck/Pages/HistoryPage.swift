@@ -46,7 +46,6 @@ struct HistoryPage: View {
     @State private var period: PeriodFilter = .all
     @State private var selectedRecord: IdentifiedID?
 
-    private var isRoot: Bool { orderId == nil }
     private var now = Date()
 
     private var rows: [(record: ScanRecord, order: Order?, mismatches: Int)] {
@@ -81,21 +80,15 @@ struct HistoryPage: View {
     }
 
     var body: some View {
-        Group {
-            if isRoot {
-                RootPageScaffold(tab: .history) { content }
-            } else {
-                PushedPageScaffold { content }
-                    .navigationTitle("ประวัติออเดอร์")
-                    .bakeInlineTitle()
-            }
-        }
-        .sheet(item: $selectedRecord) { target in
+        PushedPageScaffold { content }
+            .navigationTitle("")
+            .bakeInlineTitle()
+            .sheet(item: $selectedRecord) { target in
             if let row = rows.first(where: { $0.record.id == target.id }) {
                 RecordDetailSheet(
                     record: row.record,
                     order: row.order,
-                    onShowOrder: { id in router.go(.orderDetail(id), in: .orders) },
+                    onShowOrder: { id in router.go(.orderDetail(id)) },
                     onShowResult: { id in router.go(.result(id)) }
                 )
             }
@@ -110,10 +103,8 @@ struct HistoryPage: View {
             accessory: AnyView(Badge(text: "\(rows.count) บันทึก", tone: .neutral))
         )
 
-        if isRoot {
-            BakeButton(title: "เริ่มตรวจสอบออเดอร์", icon: .scan, variant: .primary, block: true) {
-                router.select(.packing)
-            }
+        BakeButton(title: "เริ่มตรวจสอบออเดอร์", icon: .scan, variant: .primary, block: true) {
+            router.startScanning()
         }
 
         BakeCard {

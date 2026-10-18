@@ -2,56 +2,51 @@
 //  Router.swift
 //  BakeCheck
 //
-//  Lightweight in-app router. Each of the five top-level areas owns its own
-//  navigation stack so a push inside one area never leaks into another.
+//  The app has two top-level areas:
+//    • ตรวจสอบสินค้า — the packing station, which is where the app opens
+//    • ตั้งค่า — settings, which also holds the entrance to the dashboard
+//
+//  Everything else (dashboard, order list, order detail, results, handover,
+//  history) is pushed on top of whichever area is active, so there is never a
+//  crowded tab bar on iPhone or iPad.
 //
 
 import Combine
 import SwiftUI
 
-/// Top-level areas shown in the tab bar / sidebar.
+/// Top-level areas shown in the tab bar.
 enum AppTab: String, CaseIterable, Identifiable, Hashable {
-    case dashboard
-    case orders
     case packing
-    case history
     case settings
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .dashboard: "ภาพรวม"
-        case .orders: "จัดการออเดอร์"
         case .packing: "ตรวจสอบสินค้า"
-        case .history: "ประวัติออเดอร์"
         case .settings: "ตั้งค่า"
         }
     }
 
     var icon: IconName {
         switch self {
-        case .dashboard: .dashboard
-        case .orders: .orders
         case .packing: .scan
-        case .history: .history
         case .settings: .settings
         }
     }
 
     var subtitle: String {
         switch self {
-        case .dashboard: "ตรวจสอบความถูกต้องของออเดอร์ก่อนส่งมอบ"
-        case .orders: "ค้นหา ตรวจสอบ และจัดการออเดอร์ทั้งหมด"
         case .packing: "สแกนเทียบจำนวนสินค้ากับออเดอร์ก่อนส่งมอบ"
-        case .history: "บันทึกผลการตรวจสอบย้อนหลัง"
-        case .settings: "ข้อมูลร้าน การแจ้งเตือน และการตั้งค่า"
+        case .settings: "ข้อมูลร้าน การแจ้งเตือน และภาพรวมร้าน"
         }
     }
 }
 
 /// Screens that can be pushed on top of an area.
 enum Destination: Hashable {
+    case dashboard
+    case orders
     case orderDetail(String)
     case packing(String)
     case result(String)
@@ -60,6 +55,8 @@ enum Destination: Hashable {
 
     var title: String {
         switch self {
+        case .dashboard: "ภาพรวม"
+        case .orders: "จัดการออเดอร์"
         case .orderDetail: "รายละเอียดออเดอร์"
         case .packing: "ตรวจสอบสินค้า"
         case .result: "ผลการตรวจสอบ"
@@ -71,7 +68,8 @@ enum Destination: Hashable {
 
 @MainActor
 final class Router: ObservableObject {
-    @Published var tab: AppTab = .dashboard
+    /// The app opens straight into the verification station.
+    @Published var tab: AppTab = .packing
     @Published private(set) var paths: [AppTab: [Destination]] = [:]
 
     func path(for tab: AppTab) -> [Destination] { paths[tab] ?? [] }
@@ -100,5 +98,27 @@ final class Router: ObservableObject {
 
     func popToRoot(_ tab: AppTab) {
         paths[tab] = []
+    }
+
+    /// Jump to the packing station. Clears pushed screens so "back" always
+    /// returns to a meaningful place.
+    func startScanning(orderId: String? = nil) {
+        paths[.settings] = []
+        paths[.packing] = []
+        tab = .packing
+        if let orderId {
+            paths[.packing] = [.packing(orderId)]
+        }
+    }
+
+    /// Open the dashboard (reached from the bottom of the settings screen).
+    func openDashboard() {
+        tab = .settings
+        paths[.settings] = [.dashboard]
+    }
+
+    /// Order list, reachable from the dashboard and from the station.
+    func openOrders() {
+        go(.orders)
     }
 }

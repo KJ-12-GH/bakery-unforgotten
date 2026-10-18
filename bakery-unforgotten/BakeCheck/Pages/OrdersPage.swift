@@ -67,14 +67,14 @@ struct OrdersPage: View {
     }
 
     var body: some View {
-        RootPageScaffold(tab: .orders) {
+        PushedPageScaffold {
             PageHeader(
                 title: "จัดการออเดอร์",
                 subtitle: "ค้นหา ตรวจสอบรายละเอียด และเลือกออเดอร์เพื่อเข้าสู่ขั้นตอนตรวจสอบสินค้า"
             )
 
             BakeButton(title: "เริ่มตรวจสอบออเดอร์", icon: .scan, variant: .primary, block: true) {
-                router.select(.packing)
+                router.startScanning()
             }
 
             VStack(alignment: .leading, spacing: BakeSpace.s3) {
@@ -137,6 +137,8 @@ struct OrdersPage: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+        .navigationTitle("")
+        .bakeInlineTitle()
     }
 
     private func performPrimaryAction(for order: Order) {
@@ -145,7 +147,7 @@ struct OrdersPage: View {
         } else if order.status == .handedOver {
             router.go(.orderDetail(order.id))
         } else {
-            router.go(.packing(order.id))
+            router.startScanning(orderId: order.id)
         }
     }
 }

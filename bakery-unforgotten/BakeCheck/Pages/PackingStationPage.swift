@@ -99,13 +99,39 @@ struct PackingStationPage: View {
 
     @ViewBuilder
     private var content: some View {
-        PageHeader(
-            title: "ตรวจสอบสินค้า",
-            subtitle: "เทียบจำนวนสินค้าจริงกับออเดอร์ของลูกค้าก่อนส่งมอบให้พนักงานขับรถ",
-            accessory: AnyView(SimTag(text: "ผลจำลอง"))
-        )
+        if let order = currentOrder {
+            BakeHero(
+                title: "ตรวจสอบสินค้า",
+                subtitle: "\(order.id) · \(order.customer)",
+                symbol: "viewfinder",
+                tag: "ผลจำลอง",
+                footnote: "\(order.items.count) รายการ · รวม \(OrderMath.totalQty(order)) ชิ้น · \(Labels.handover(order.handover))"
+            )
 
-        if currentOrder == nil {
+            orderPickerCard(order)
+
+            BakeSplit(
+                primary: {
+                    CameraPanel(
+                        isScanning: isScanning,
+                        isDisabled: isLocked,
+                        lastCapture: lastCapture,
+                        onScan: runScan
+                    )
+                },
+                secondary: {
+                    comparisonCard(order)
+                    instructionsCard
+                }
+            )
+        } else {
+            BakeHero(
+                title: "ตรวจสอบสินค้า",
+                subtitle: "สแกนเทียบจำนวนสินค้ากับออเดอร์ก่อนส่งมอบ",
+                symbol: "viewfinder",
+                tag: "ผลจำลอง"
+            )
+
             BakeCard {
                 EmptyState(
                     icon: .inbox,
@@ -113,21 +139,8 @@ struct PackingStationPage: View {
                     text: "เมื่อมีออเดอร์ใหม่ ระบบจะแสดงที่นี่เพื่อให้สแกนตรวจสอบ",
                     actionTitle: "ไปที่จัดการออเดอร์",
                     actionIcon: .orders
-                ) { router.select(.orders) }
+                ) { router.go(.orders) }
             }
-        } else if let order = currentOrder {
-            orderPickerCard(order)
-
-            CameraPanel(
-                isScanning: isScanning,
-                isDisabled: isLocked,
-                lastCapture: lastCapture,
-                onScan: runScan
-            )
-
-            comparisonCard(order)
-
-            instructionsCard
         }
     }
 
@@ -180,6 +193,20 @@ struct PackingStationPage: View {
                 }
 
                 BakeSeparator()
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: BakeSpace.s3) {
+                        ForEach(order.items) { item in
+                            VStack(spacing: 5) {
+                                ProductGlyph(productId: item.productId, size: 46)
+                                Text("×\(item.expectedQty)")
+                                    .font(BakeFont.tiny.weight(.semibold))
+                                    .foregroundStyle(BakeColor.wood)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 2)
+                }
 
                 VStack(spacing: BakeSpace.s3) {
                     DefRow(key: "ลูกค้า", value: order.customer)
@@ -273,7 +300,7 @@ struct PackingStationPage: View {
                         }
                         if order.handover == .ready {
                             BakeButton(title: "ไปส่งมอบ", icon: .truck, variant: .success, block: true) {
-                                router.go(.handover(order.id), in: .orders)
+                                router.go(.handover(order.id))
                             }
                         }
                     } else {
